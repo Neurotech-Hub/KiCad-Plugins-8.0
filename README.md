@@ -5,6 +5,8 @@ Inspired by the need for NFC antennas. See also:
 - [nideri/nfc_antenna_generator: generate nfc antenna module for kicad](https://github.com/nideri/nfc_antenna_generator)
 - [ST NFC Inductance Calculator](https://eds.st.com/antenna/#/)
 - [AN2972: How to design an antenna for dynamic NFC tags](https://neurotech-hub.github.io/KiCad-Antenna-Generator/an2972-how-to-design-an-antenna-for-dynamic-nfc-tags-stmicroelectronics.pdf)
+- [Cheatsheet for writing KiCad v6 plugin scripts in Python](https://climbers.net/sbc/kicad-plugin-script-cheatsheet/)
+- [KiCad/kicad-footprint-wizards](https://github.com/KiCad/kicad-footprint-wizards)
 
 ## Installation
 Place the `*.py` file in the KiCad scripting folder. You can find a list of these by clicking into the Footprint Editor > Footprint Wizard > Messages tab. On MacOS: `/Users/.../Documents/KiCad/8.0/scripting/plugins/`.
