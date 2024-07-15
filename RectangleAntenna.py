@@ -23,8 +23,9 @@ class RectangularAntenna(FootprintWizardBase.FootprintWizard):
         self.AddParam("Antenna", "trace_nm", self.uInteger, 600000, min_value=1, max_value=1000000)
         self.AddParam("Antenna", "trace_spacing", self.uMM, 1.0, min_value=0.1, max_value=50.0)
         self.AddParam("Antenna", "silk_margin", self.uMM, 1.0, min_value=0.0, max_value=10.0)
+        self.AddParam("Antenna", "style", self.uInteger, 0, min_value=0, max_value=1)
         self.AddParam("Antenna", "name", self.uString, "rectangle")
-        self.AddParam("Pads", "pad_diameter", self.uMM, 1.0, min_value=0.1, max_value=5.0)
+        self.AddParam("Pads", "pad_diameter", self.uMM, 0.6, min_value=0.1, max_value=5.0)
         self.AddParam("Pads", "drill_size", self.uMM, 0.35, min_value=0.1, max_value=2.0)
 
     def CheckParameters(self):
@@ -45,6 +46,7 @@ class RectangularAntenna(FootprintWizardBase.FootprintWizard):
         trace_nm = self.parameters["Antenna"]["trace_nm"]
         trace_spacing = self.parameters["Antenna"]["trace_spacing"]
         silk_margin = self.parameters["Antenna"]["silk_margin"]
+        style = self.parameters["Antenna"]["style"]
         name = self.parameters["Antenna"]["name"]
 
         module = self.module
@@ -61,79 +63,115 @@ class RectangularAntenna(FootprintWizardBase.FootprintWizard):
             rect.SetWidth(pcbnew.FromMM(0.15))
             module.Add(rect)
 
-        # Starting point for the antenna
-        x = 0
-        y = length / 2
+        trace_width = trace_nm * 1e-6
 
-        posX = width / 2
-        negX = -width / 2
-        posY = length / 2
-        negY = -length / 2
+        if style == 1:
+            xg = ((math.sqrt(2) - 1) * turns + 1) * (trace_width + trace_spacing)
+            dx1 = (math.sqrt(2) - 1) * (trace_width + trace_spacing)
+            dx2 = (trace_width + trace_spacing) * math.sqrt(2)
+            dy = (trace_width + trace_spacing)
 
-        # Create and add the first pad at the inner starting point
-        pad1 = self.GetPad()
-        pad1.SetPosition(self.draw.TransformPoint(x, y))
-        pad1.SetPadName("1")
-        module.Add(pad1)
+            x0 = 0
+            y0 = length / 2
+            d = 0
 
-        for i in range(turns):
-            # Horizontal right to left
-            line = pcbnew.PCB_SHAPE(module)
-            line.SetShape(pcbnew.SHAPE_T_SEGMENT)
-            line.SetLayer(pcbnew.F_Cu)
-            line.SetStart(self.draw.TransformPoint(x, y))
-            x = negX
-            line.SetEnd(self.draw.TransformPoint(x, y))
-            line.SetWidth(trace_nm)
-            module.Add(line)
-            negX += trace_spacing
+            for seg in range(turns * 6 + 1):
+                if seg % 6 == 0:  # line goes left from middle
+                    if seg == turns * 6:  # last iteration
+                        x1 = 0
+                    else:
+                        x1 = x0 - (xg/2) - (width / 2 - xg / 2 - trace_width / 2 - d) - int(seg / 6) * dx1
+                    y1 = y0
+                elif seg % 6 == 1:  # line goes up
+                    x1 = x0
+                    y1 = y0 - (length - trace_width - 2 * d)
+                elif seg % 6 == 2:  # line goes right
+                    x1 = x0 + (width - trace_width - 2 * d)
+                    y1 = y0
+                elif seg % 6 == 3:  # line goes down
+                    x1 = x0
+                    y1 = y0 + (length - trace_width - 2 * d)
+                elif seg % 6 == 4:  # line goes left to the middle
+                    x1 = x0 + (xg/2) - (width / 2 - xg / 2 - trace_width / 2 - d) - (turns - 1 - int(seg / 6)) * dx1
+                    y1 = y0
+                elif seg % 6 == 5:  # line from the middle with a slope to the next level
+                    x1 = x0 - dx2 + dx1
+                    y1 = y0 - dy
+                    d += trace_spacing + trace_width
 
-            # Vertical top to bottom
-            line = pcbnew.PCB_SHAPE(module)
-            line.SetShape(pcbnew.SHAPE_T_SEGMENT)
-            line.SetLayer(pcbnew.F_Cu)
-            line.SetStart(self.draw.TransformPoint(x, y))
-            y = negY
-            line.SetEnd(self.draw.TransformPoint(x, y))
-            line.SetWidth(trace_nm)
-            module.Add(line)
-            negY += trace_spacing
+                # DRAW LINE HERE
+                line = pcbnew.PCB_SHAPE(module)
+                line.SetShape(pcbnew.SHAPE_T_SEGMENT)
+                line.SetLayer(pcbnew.F_Cu)
+                line.SetStart(self.draw.TransformPoint(x0, y0))
+                line.SetEnd(self.draw.TransformPoint(x1, y1))
+                line.SetWidth(trace_nm)
+                module.Add(line)
 
-            # Horizontal left to right
-            line = pcbnew.PCB_SHAPE(module)
-            line.SetShape(pcbnew.SHAPE_T_SEGMENT)
-            line.SetLayer(pcbnew.F_Cu)
-            line.SetStart(self.draw.TransformPoint(x, y))
-            x = posX
-            line.SetEnd(self.draw.TransformPoint(x, y))
-            line.SetWidth(trace_nm)
-            module.Add(line)
-            posX -= trace_spacing
+                x0 = x1
+                y0 = y1
 
-            # Vertical bottom to top
-            line = pcbnew.PCB_SHAPE(module)
-            line.SetShape(pcbnew.SHAPE_T_SEGMENT)
-            line.SetLayer(pcbnew.F_Cu)
-            line.SetStart(self.draw.TransformPoint(x, y))
-            y = posY - trace_spacing
-            line.SetEnd(self.draw.TransformPoint(x, y))
-            line.SetWidth(trace_nm)
-            module.Add(line)
-            posY -= trace_spacing
+            # Create and add the first pad at the inner starting point
+            pad1 = self.GetPad()
+            pad1.SetPosition(self.draw.TransformPoint(0, length / 2))
+            pad1.SetPadName("1")
+            module.Add(pad1)
 
-        # Create the final line connecting to the second pad
-        line = pcbnew.PCB_SHAPE(module)
-        line.SetShape(pcbnew.SHAPE_T_SEGMENT)
-        line.SetLayer(pcbnew.F_Cu)
-        line.SetStart(self.draw.TransformPoint(x, y))
-        line.SetEnd(self.draw.TransformPoint(0, y))
-        line.SetWidth(trace_nm)
-        module.Add(line)
+            # Create and add the second pad at the outer ending point
+            pad2 = self.GetPad()
+            pad2.SetPosition(self.draw.TransformPoint(0, y0))
+            pad2.SetPadName("2")
+            module.Add(pad2)
+        else:
+            x0 = -width / 2
+            y0 = length / 2
+            dx = width - trace_width
+            dy = length - trace_width
 
-        # Create and add the second pad at the outer ending point
-        pad2 = self.GetPad()
-        pad2.SetPosition(self.draw.TransformPoint(0, y))
-        pad2.SetPadName("2")
-        module.Add(pad2)
+            # Create and add the first pad at the inner starting point
+            pad1 = self.GetPad()
+            pad1.SetPosition(self.draw.TransformPoint(x0, y0))
+            pad1.SetPadName("1")
+            module.Add(pad1)
+
+            for seg in range(0, turns * 4):
+                if seg % 4 == 0:  # line goes up
+                    x1 = x0
+                    y1 = y0 - dy
+                elif seg % 4 == 1:  # line goes right
+                    if int(seg / 4) > 0:  # not for 1st right
+                        dx = dx - trace_width - trace_spacing
+                    x1 = x0 + dx
+                    y1 = y0
+                elif seg % 4 == 2:  # line goes down
+                    if int(seg / 4) > 0:  # not for 1st down
+                        dy = dy - trace_width - trace_spacing
+                    x1 = x0
+                    y1 = y0 + dy
+                elif seg % 4 == 3:  # line goes left
+                    dx = dx - trace_width - trace_spacing
+                    x1 = x0 - dx
+                    y1 = y0
+                    dy = dy - trace_width - trace_spacing
+
+                # DRAW LINE HERE
+                line = pcbnew.PCB_SHAPE(module)
+                line.SetShape(pcbnew.SHAPE_T_SEGMENT)
+                line.SetLayer(pcbnew.F_Cu)
+                line.SetStart(self.draw.TransformPoint(x0, y0))
+                line.SetEnd(self.draw.TransformPoint(x1, y1))
+                line.SetWidth(trace_nm)
+                module.Add(line)
+
+                x0 = x1
+                y0 = y1
+
+            # Create and add the second pad at the outer ending point
+            pad2 = self.GetPad()
+            pad2.SetPosition(self.draw.TransformPoint(x0, y0))
+            pad2.SetPadName("2")
+            module.Add(pad2)
+
+
 
 RectangularAntenna().register()

@@ -24,7 +24,7 @@ class SpiralAntenna(FootprintWizardBase.FootprintWizard):
         self.AddParam("Antenna", "trace_nm", self.uInteger, 600000, min_value=1, max_value=1000000)
         self.AddParam("Antenna", "silk_margin", self.uMM, 1.0, min_value=0.0, max_value=10.0)
         self.AddParam("Antenna", "name", self.uString, "spiral")
-        self.AddParam("Pads", "pad_diameter", self.uMM, 1.0, min_value=0.1, max_value=5.0)
+        self.AddParam("Pads", "pad_diameter", self.uMM, 0.6, min_value=0.1, max_value=5.0)
         self.AddParam("Pads", "drill_size", self.uMM, 0.35, min_value=0.1, max_value=2.0)
 
     def CheckParameters(self):
