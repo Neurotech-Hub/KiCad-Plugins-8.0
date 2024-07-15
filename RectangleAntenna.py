@@ -172,6 +172,4 @@ class RectangularAntenna(FootprintWizardBase.FootprintWizard):
             pad2.SetPadName("2")
             module.Add(pad2)
 
-
-
 RectangularAntenna().register()
