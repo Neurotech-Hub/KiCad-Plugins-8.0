@@ -23,8 +23,9 @@ class RectangularAntenna(FootprintWizardBase.FootprintWizard):
         self.AddParam("Antenna", "trace_nm", self.uInteger, 600000, min_value=1, max_value=1000000)
         self.AddParam("Antenna", "trace_spacing", self.uMM, 1.0, min_value=0.1, max_value=50.0)
         self.AddParam("Antenna", "silk_margin", self.uMM, 1.0, min_value=0.0, max_value=10.0)
-        self.AddParam("Antenna", "style", self.uInteger, 0, min_value=0, max_value=1)
+        self.AddParam("Antenna", "jog_traces", self.uBool, False)
         self.AddParam("Antenna", "name", self.uString, "rectangle")
+        # self.AddParam("Antenna", "tie_nets", self.uBool, True)
         self.AddParam("Pads", "pad_diameter", self.uMM, 0.6, min_value=0.1, max_value=5.0)
         self.AddParam("Pads", "drill_size", self.uMM, 0.35, min_value=0.1, max_value=2.0)
 
@@ -46,8 +47,9 @@ class RectangularAntenna(FootprintWizardBase.FootprintWizard):
         trace_nm = self.parameters["Antenna"]["trace_nm"]
         trace_spacing = self.parameters["Antenna"]["trace_spacing"]
         silk_margin = self.parameters["Antenna"]["silk_margin"]
-        style = self.parameters["Antenna"]["style"]
+        jog_traces = self.parameters["Antenna"]["jog_traces"]
         name = self.parameters["Antenna"]["name"]
+        # tie_nets = self.parameters["Antenna"]["tie_nets"]
 
         module = self.module
         module.SetReference("REF**")
@@ -65,7 +67,14 @@ class RectangularAntenna(FootprintWizardBase.FootprintWizard):
 
         trace_width = trace_nm * 1e-6
 
-        if style == 1:
+        # Access the board object
+        # board = module.GetBoard()
+        # net = None
+        # if self.parameters["Antenna"]["tie_nets"]:
+        #     net = pcbnew.NETINFO_ITEM(board, "NetTie")
+        #     board.Add(net)
+
+        if jog_traces:
             xg = ((math.sqrt(2) - 1) * turns + 1) * (trace_width + trace_spacing)
             dx1 = (math.sqrt(2) - 1) * (trace_width + trace_spacing)
             dx2 = (trace_width + trace_spacing) * math.sqrt(2)
@@ -115,12 +124,16 @@ class RectangularAntenna(FootprintWizardBase.FootprintWizard):
             pad1 = self.GetPad()
             pad1.SetPosition(self.draw.TransformPoint(0, length / 2))
             pad1.SetPadName("1")
+            # if net:
+            #     pad1.SetNet(net)
             module.Add(pad1)
 
             # Create and add the second pad at the outer ending point
             pad2 = self.GetPad()
             pad2.SetPosition(self.draw.TransformPoint(0, y0))
             pad2.SetPadName("2")
+            # if net:
+            #     pad2.SetNet(net)
             module.Add(pad2)
         else:
             x0 = -width / 2
@@ -132,6 +145,8 @@ class RectangularAntenna(FootprintWizardBase.FootprintWizard):
             pad1 = self.GetPad()
             pad1.SetPosition(self.draw.TransformPoint(x0, y0))
             pad1.SetPadName("1")
+            # if net:
+            #     pad1.SetNet(net)
             module.Add(pad1)
 
             for seg in range(0, turns * 4):
@@ -170,6 +185,8 @@ class RectangularAntenna(FootprintWizardBase.FootprintWizard):
             pad2 = self.GetPad()
             pad2.SetPosition(self.draw.TransformPoint(x0, y0))
             pad2.SetPadName("2")
+            # if net:
+            #     pad2.SetNet(net)
             module.Add(pad2)
 
 RectangularAntenna().register()
