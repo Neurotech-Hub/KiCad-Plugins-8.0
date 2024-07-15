@@ -13,30 +13,34 @@ Place the `*.py` file in the KiCad scripting folder. You can find a list of thes
 
 You should see the new footprint wizards now.
 
-![](screenshots/04.png)
+![](screenshots/00.png)
 
 > Note: I could not get around an overflow error when trying to cast uMM to int for the SetWidth() function. Therefore, trace widths are integers set in the pcbnew base unit of nanometers.
 
 ## Rectangle Tool
 Antenna and Pads parameters are accessible on the left panel. There are two styles:
 
-- 0: Non-jogging
-- 1: Jogging
+- Non-jogging
+- Jogging
 
 **0: Non-jogging**
 ![](screenshots/01.png)
 
 **1: Jogging**
-![](screenshots/03.png)
+![](screenshots/02.png)
 
 ## Spiral Tool
 Antenna and Pads parameters are accessible on the left panel.
 
 **Standard Spiral**
-![](screenshots/05.png)
+![](screenshots/03.png)
 
 **3 Segments per Turn**
-![](screenshots/06.png)
+![](screenshots/04.png)
 
 **4 Segments per Turn**
-![](screenshots/07.png)
+![](screenshots/05.png)
+## Tying Nets
+You *will* get DRC errors if you don't tie nets. I was able to solve this in the Javascript generator by pasting the line `(net_tie_pad_groups "1,2")`. It is not yet clear how to do this in the Wizard, but the solution is easy. Use the shortcut `e` on the resulting footprint to get Preferences. In Clearance Overrides and Settings add pads `1,2` to Net Ties.
+
+![](screenshots/06.png)
